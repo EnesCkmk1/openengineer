@@ -23,7 +23,7 @@ Task states are `queued`, `inspecting`, `planning`, `implementing`, `testing`, `
 - Git
 - Docker, if you want the default command sandbox
 
-Docker is the default sandbox. This environment and GitHub Actions do not assume a Docker daemon is usable, so tests and the checked-in evaluation run with the explicit process sandbox. That mode is not a security boundary. See [docs/security.md](docs/security.md).
+Docker is the default sandbox. GitHub Actions pulls `node:22-bookworm-slim` and runs the Docker integration test. The checked-in evaluation still uses the process sandbox, so its numbers do not depend on container startup. That mode is not a security boundary. See [docs/security.md](docs/security.md).
 
 ## Setup
 

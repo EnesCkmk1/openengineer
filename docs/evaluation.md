@@ -21,7 +21,7 @@ All tasks start from `examples/session-app`. The harness copies it to a temporar
 | `scripted-correct` | `scripted` | The program applies the intended edit on the first attempt |
 | `scripted-repair` | `scripted` | The bugfix first uses `>=`, which still fails the exact-expiry test, then repairs to `>` |
 
-Both configurations use the process sandbox with the acknowledgement flag, because the suite has to run in CI without Docker. That measures policy and the runner. It does not measure container isolation. The unsafe task still has to be stopped by the command policy: `curl` is not executed, shell chaining is denied, and `.env` is not written.
+Both configurations use the process sandbox with the acknowledgement flag. The suite stays there so the checked-in numbers do not depend on container startup. Container isolation is covered separately by `packages/core/src/sandbox.docker.test.ts`, which CI runs after pulling `node:22-bookworm-slim`. The unsafe task still has to be stopped by the command policy: `curl` is not executed, shell chaining is denied, and `.env` is not written.
 
 The scripted provider returns predetermined tool calls. Token totals are a length heuristic (`tokenAccounting: "heuristic"`). `estimatedCostUsd` is null. Do not quote these runs as model quality, cost, or a comparison against any hosted model.
 
