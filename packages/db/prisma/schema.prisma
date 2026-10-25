@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Repository {
+  id             String   @id
+  name           String
+  rootPath       String   @unique
+  defaultBranch  String?
+  headCommit     String?
+  language       String?
+  packageManager String?
+  testFramework  String?
+  detection      Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  tasks          Task[]
+}
+
+model Task {
+  id              String    @id
+  repositoryId    String
+  repository      Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  instruction     String
+  title           String
+  status          String
+  baseCommit      String?
+  branch          String?
+  worktreePath    String?
+  plan            Json?
+  checkpoint      Json?
+  verification    Json?
+  usage           Json?
+  budget          Json
+  error           String?
+  errorCode       String?
+  cancelRequested Boolean   @default(false)
+  runnerId        String?
+  heartbeatAt     DateTime?
+  sandboxMode     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  startedAt       DateTime?
+  finishedAt      DateTime?
+  steps           AgentStep[]
+  approvals       Approval[]
+
+  @@index([repositoryId, createdAt])
+  @@index([status, heartbeatAt])
+}
+
+model AgentStep {
+  id         String    @id
+  taskId     String
+  task       Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  sequence   Int
+  phase      String
+  kind       String
+  name       String
+  status     String
+  input      Json?
+  output     Json?
+  error      String?
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  durationMs Int?
+
+  @@unique([taskId, sequence])
+  @@index([taskId, sequence])
+}
+
+model Approval {
+  id         String    @id
+  taskId     String
+  task       Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  kind       String
+  prompt     String
+  payload    Json
+  status     String
+  resolution Json?
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
+
+  @@index([taskId, status])
+}

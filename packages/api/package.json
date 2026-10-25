@@ -1,0 +1,17 @@
+{
+  "name": "@openengineer/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/server.ts"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.0.1",
+    "@fastify/static": "^10.1.7",
+    "@openengineer/core": "0.1.0",
+    "@openengineer/db": "0.1.0",
+    "@openengineer/shared": "0.1.0",
+    "fastify": "^5.3.3"
+  }
+}

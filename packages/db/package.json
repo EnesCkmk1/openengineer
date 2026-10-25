@@ -1,0 +1,16 @@
+{
+  "name": "@openengineer/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@openengineer/core": "0.1.0",
+    "@openengineer/shared": "0.1.0",
+    "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "^7.10.1",
+    "pg": "^8.16.0"
+  }
+}

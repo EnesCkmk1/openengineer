@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: openengineer
+          POSTGRES_PASSWORD: openengineer
+          POSTGRES_DB: openengineer
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U openengineer -d openengineer"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://openengineer:openengineer@localhost:5432/openengineer
+      OPENENGINEER_SANDBOX: process
+      OPENENGINEER_ALLOW_PROCESS_SANDBOX: "true"
+      OPENENGINEER_MODEL_PROVIDER: scripted
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate
+      - run: npm run db:migrate
+      - name: Create test database
+        run: PGPASSWORD=openengineer psql -h localhost -U openengineer -d openengineer -c "CREATE DATABASE openengineer_test OWNER openengineer;" || true
+      - name: Migrate test database
+        run: DATABASE_URL=postgresql://openengineer:openengineer@localhost:5432/openengineer_test npm run db:migrate
+      - run: npm run typecheck
+      - run: npm run lint
+      - name: Pull the command sandbox image
+        run: docker pull node:22-bookworm-slim
+      - run: npm test
+      - run: npm run build
+      - run: npm run build -w @openengineer/web
+      - run: npm run eval
