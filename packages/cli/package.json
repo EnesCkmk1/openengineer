@@ -1,0 +1,13 @@
+{
+  "name": "@openengineer/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@openengineer/api": "0.1.0",
+    "@openengineer/core": "0.1.0",
+    "@openengineer/db": "0.1.0",
+    "@openengineer/shared": "0.1.0",
+    "commander": "^14.0.0"
+  }
+}

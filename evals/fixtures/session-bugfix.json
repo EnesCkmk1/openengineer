@@ -1,0 +1,41 @@
+{
+  "plan": {
+    "objective": "Reject expired sessions, including the exact expiry instant.",
+    "acceptanceCriteria": ["Expired sessions are rejected", "The existing tests pass"],
+    "relevantFiles": ["src/session.js"],
+    "dependencies": [],
+    "steps": [{ "id": "1", "description": "Change the expiry comparison so a session is valid only before expiresAt." }],
+    "validationCommands": ["npm test", "npm run lint"],
+    "risks": ["This file is a deterministic script. It does not inspect the repository."],
+    "assumptions": ["The fixture comparison is session.expiresAt <= now."],
+    "needsClarification": false,
+    "clarificationQuestions": []
+  },
+  "implement": [
+    {
+      "toolCalls": [
+        {
+          "name": "edit_file",
+          "arguments": {
+            "path": "src/session.js",
+            "oldString": "return session.expiresAt <= now;",
+            "newString": "return session.expiresAt > now;"
+          }
+        }
+      ]
+    },
+    {
+      "toolCalls": [
+        {
+          "name": "finish",
+          "arguments": { "summary": "Expired sessions are rejected." }
+        }
+      ]
+    }
+  ],
+  "review": {
+    "summary": "Scripted review is supplementary accounting data, not evidence of correctness.",
+    "concerns": [],
+    "confidence": "low"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "name": "openengineer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Open-source agent that implements software tasks in isolated git worktrees and verifies the result.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "packages/shared",
+    "packages/core",
+    "packages/db",
+    "packages/api",
+    "packages/cli",
+    "packages/web",
+    "packages/eval"
+  ],
+  "bin": {
+    "openengineer": "./dist/cli.js"
+  },
+  "scripts": {
+    "dev": "tsx scripts/dev.ts",
+    "start": "node dist/api.js",
+    "build": "tsx scripts/build.ts && npm run build -w @openengineer/web",
+    "cli": "tsx packages/cli/src/index.ts",
+    "eval": "tsx packages/eval/src/cli.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p packages/web/tsconfig.json",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "db:generate": "prisma generate --schema packages/db/prisma/schema.prisma",
+    "db:migrate": "prisma migrate deploy --schema packages/db/prisma/schema.prisma",
+    "db:dev": "prisma migrate dev --schema packages/db/prisma/schema.prisma",
+    "examples:init": "tsx scripts/init-example.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.28.0",
+    "@types/node": "^22.15.29",
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.5",
+    "esbuild": "^0.25.5",
+    "eslint": "^9.28.0",
+    "prisma": "^7.10.1",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.33.1",
+    "vitest": "^5.0.5"
+  }
+}
