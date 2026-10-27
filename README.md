@@ -2,8 +2,6 @@
 
 OpenEngineer is a local tool that lets an AI agent change a repository in an isolated git worktree, run the project's checks, and report what actually happened. It does not merge, push, or deploy.
 
-The repository started as an MIT license and a placeholder README. Everything else in this tree is the implementation described below.
-
 ## What it does
 
 1. Registers a local git repository and detects its Node package manager, scripts, and test runner.
@@ -15,6 +13,91 @@ The repository started as an MIT license and a placeholder README. Everything el
 7. Writes a report with the diff, check results, token accounting, duration, and sandbox mode.
 
 Task states are `queued`, `inspecting`, `planning`, `implementing`, `testing`, `repairing`, `verifying`, `completed`, `failed`, `cancelled`, and `awaiting_approval`.
+
+## Example
+
+`examples/session-app` is a small app with one bug. `isSessionValid` treats an expired session as valid:
+
+```js
+export function isSessionValid(session, now) {
+  if (!session?.id || !session?.userId) return false;
+  // BUG: inverted comparison accepts expired sessions and rejects active ones.
+  return session.expiresAt <= now;
+}
+```
+
+`expiresAt` is an exclusive deadline. The tests already require a session to be valid only while `now` is before that instant, so `npm test` fails until the comparison is fixed.
+
+After [setup](#setup), copy the fixture into its own git repository and give OpenEngineer the task:
+
+```bash
+npm run examples:init
+
+npm run cli -- run "Fix the bug where expired sessions are accepted." --repo .openengineer/session-app
+```
+
+That needs a configured model provider and the Docker image from the setup section. To replay this one edit without a model key, use the scripted fixture. It performs the change below. It does not read the repository and decide the fix, and the process sandbox is not a security boundary:
+
+```bash
+npm run examples:init
+
+OPENENGINEER_SANDBOX=process \
+OPENENGINEER_ALLOW_PROCESS_SANDBOX=true \
+OPENENGINEER_MODEL_PROVIDER=scripted \
+OPENENGINEER_SCRIPTED_FILE=./evals/fixtures/session-bugfix.json \
+npm run cli -- run "Fix the bug where expired sessions are accepted." --repo .openengineer/session-app
+```
+
+The CLI prints one line per recorded step, then the report. This is a shortened trace from a scripted run. The id on the first line is the one you pass to `diff` and `report`:
+
+```text
+task 41bc31fe-3ffa-4bbb-a23b-466bc50b8ebf queued
+[inspecting] inspection inspect_repository (completed)
+[planning] model plan (completed)
+[planning] plan submit_plan (completed)
+[implementing] git create_worktree (completed)
+[implementing] model implement (completed)
+[implementing] tool edit_file (completed)
+[implementing] tool finish (completed)
+[testing] verification checks (completed)
+[verifying] verification checks (completed)
+[verifying] review ai_review (completed)
+
+Status: completed
+Verification: passed
+Sandbox: process
+Branch: openengineer/41bc31fe-3ffa-4bbb-a23b-466bc50b8ebf
+- Tests: passed (npm test)
+- Lint: passed (npm run lint)
+- Diff inspection: passed
+Tokens: 1548 in / 88 out (heuristic)
+Estimated cost USD: unavailable
+Repair attempts: 0
+```
+
+State changes such as `[planning] state planning` are printed too. They are left out above.
+
+Token counts on the scripted provider are a character-length heuristic. A hosted model reports its own usage, and the estimated cost stays `unavailable` when the model has no price in the table. Durations move between machines.
+
+```bash
+npm run cli -- diff <taskId>
+npm run cli -- report <taskId>
+```
+
+The diff is one line in the worktree:
+
+```diff
+ export function isSessionValid(session, now) {
+   if (!session?.id || !session?.userId) return false;
+   // BUG: inverted comparison accepts expired sessions and rejects active ones.
+-  return session.expiresAt <= now;
++  return session.expiresAt > now;
+ }
+```
+
+`.openengineer/session-app` still contains `<=`. The fix is only on branch `openengineer/<taskId>`. Nothing is merged.
+
+The same task in the dashboard shows the step list, this diff, and the verification section. A model review is stored under the checks and cannot change a failed one to passed.
 
 ## Requirements
 
@@ -82,23 +165,7 @@ npm start
 
 `npm start` serves the API and, when `packages/web/dist` exists, the dashboard.
 
-Prepare a disposable copy of the sample project:
-
-```bash
-npm run examples:init
-```
-
-That writes a git repository to `.openengineer/session-app` (or a path you pass). The sample's `isSessionValid` accepts expired sessions. Its tests describe the intended behavior and fail until the comparison is fixed.
-
-To exercise the runner without a hosted model, opt into the process sandbox and the scripted fixture. This is a replay of one edit, and the process sandbox is not a security boundary:
-
-```bash
-OPENENGINEER_SANDBOX=process \
-OPENENGINEER_ALLOW_PROCESS_SANDBOX=true \
-OPENENGINEER_MODEL_PROVIDER=scripted \
-OPENENGINEER_SCRIPTED_FILE=./evals/fixtures/session-bugfix.json \
-npm run cli -- run "Fix the bug where expired sessions are accepted." --repo .openengineer/session-app
-```
+The session-app walkthrough, including the command that runs without a model key, is in [Example](#example).
 
 ## CLI
 
